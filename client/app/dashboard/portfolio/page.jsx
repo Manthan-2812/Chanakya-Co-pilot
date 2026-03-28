@@ -1,32 +1,66 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import {
   PieChart, Pie, Cell, Tooltip,
   LineChart, Line, XAxis, YAxis, ResponsiveContainer,
 } from "recharts";
 import { AlertTriangle, Sparkles } from "lucide-react";
+import { getUserPortfolio } from "@/library/api";
+
+const USER_ID = "default_user";
+const COLORS = ["#22c55e", "#3b82f6", "#facc15", "#f5a623", "#a78bfa", "#ef4444"];
+
+const fmt = (n) =>
+  n !== undefined && n !== null
+    ? "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+    : "—";
+
+const inflationData = [
+  { year: "2024", portfolio: 100, inflation: 100 },
+  { year: "2025", portfolio: 110, inflation: 105 },
+  { year: "2026", portfolio: 120, inflation: 110 },
+  { year: "2027", portfolio: 130, inflation: 118 },
+];
 
 export default function PortfolioPage() {
-  const data = [
-    { name: "Equity", value: 70 },
-    { name: "Debt", value: 20 },
-    { name: "Cash", value: 10 },
-  ];
+  const [portfolio, setPortfolio] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const COLORS = ["#22c55e", "#3b82f6", "#facc15"];
+  useEffect(() => {
+    getUserPortfolio(USER_ID)
+      .then(setPortfolio)
+      .catch(() => setPortfolio(null))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const inflationData = [
-    { year: "2024", portfolio: 100, inflation: 100 },
-    { year: "2025", portfolio: 110, inflation: 105 },
-    { year: "2026", portfolio: 120, inflation: 110 },
-    { year: "2027", portfolio: 130, inflation: 118 },
-  ];
+  const allocationData = portfolio?.allocation
+    ? Object.entries(portfolio.allocation).map(([name, value]) => ({ name, value: Math.round(value) }))
+    : [{ name: "Equity", value: 70 }, { name: "Debt", value: 20 }, { name: "Cash", value: 10 }];
+
+  const data = allocationData;
 
   return (
     <MainLayout>
       <h1 className="text-3xl font-bold mb-1" style={{ color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>Portfolio</h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Your current asset allocation and AI-driven insights.</p>
+
+      {/* Live KPI strip */}
+      {portfolio && (
+        <div className="flex gap-4 mb-6 flex-wrap">
+          {[
+            { label: "Total Value",  value: fmt(portfolio.total_value),  color: "var(--emerald)" },
+            { label: "Profit / Loss", value: fmt(portfolio.profit_loss), color: portfolio.profit_loss >= 0 ? "#10b981" : "#ef4444" },
+          ].map((k) => (
+            <div key={k.label} className="rounded-xl border px-5 py-3" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
+              <p className="text-xs uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>{k.label}</p>
+              <p className="text-lg font-bold" style={{ color: k.color }}>{k.value}</p>
+            </div>
+          ))}
+          {loading && <p className="text-sm self-center" style={{ color: "var(--text-muted)" }}>Loading live portfolio…</p>}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Pie Chart Card */}

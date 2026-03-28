@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { SendHorizontal } from "lucide-react";
+import { sendChatMessage } from "@/library/api";
 
 const quickActions = [
   { label: "Analyze Portfolio", prompt: "Analyze my portfolio" },
@@ -30,11 +31,14 @@ export default function Chatbot() {
     setInput("");
     setIsTyping(true);
 
-    await new Promise((r) => setTimeout(r, 900));
-
-    const botReply = getBotReply(trimmed);
-    setIsTyping(false);
-    setMessages((prev) => [...prev, { role: "bot", text: botReply }]);
+    try {
+      const reply = await sendChatMessage(trimmed);
+      setMessages((prev) => [...prev, { role: "bot", text: reply }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "bot", text: "Sorry, I couldn't reach the server. Please make sure the backend is running." }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -155,14 +159,4 @@ export default function Chatbot() {
 
     </div>
   );
-}
-
-function getBotReply(text) {
-  const t = text.toLowerCase();
-  if (t.includes("portfolio")) return "Your portfolio is 70% equity, 20% debt, 10% cash. Equity is elevated for a moderate risk profile — consider rebalancing.";
-  if (t.includes("rebalanc")) return "Recommendation: Move 10–15% from equity to debt to reduce volatility. Suggested funds: HDFC Short Duration, SBI Corporate Bond.";
-  if (t.includes("risk") || t.includes("simulat")) return "In a 20% market crash scenario, your portfolio drops ~₹1.4L. Your retirement goal would be delayed by ~3 years. Review the Simulation page for details.";
-  if (t.includes("goal")) return "You have 2 active goals: Retirement (67% complete) and Home Down Payment (42% complete). You're on track for retirement but housing needs a boost.";
-  if (t.includes("market") || t.includes("signal")) return "Current signals: IT sector SELL (overvalued), Banking BUY (strong earnings), Pharma WATCH (accumulation phase).";
-  return "Processing your request... This feature will connect to the Chanakya AI backend in Phase 8. For now, I can answer questions about portfolio, goals, signals, and risk.";
 }
