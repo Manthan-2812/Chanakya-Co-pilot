@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Target, Radio, BarChart2, Bot, Scale, MessageSquare } from "lucide-react";
 
@@ -55,8 +56,11 @@ const features = [
 ];
 
 export default function FeaturesSection() {
+  const [flipped, setFlipped] = useState({});
+  const toggle = (title) => setFlipped((p) => ({ ...p, [title]: !p[title] }));
+
   return (
-    <section id="features" className="py-24 px-6 md:px-16 relative">
+    <section id="features" className="py-24 px-4 md:px-16 relative">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -64,13 +68,13 @@ export default function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12 md:mb-16"
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)] border border-[var(--gold)]/30 px-3 py-1 rounded-full bg-[var(--gold-glow)]">
             What Chanakya Does
           </span>
           <h2
-            className="mt-4 text-4xl md:text-5xl font-bold text-[var(--text-primary)]"
+            className="mt-4 text-3xl md:text-5xl font-bold text-[var(--text-primary)]"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Intelligence that{" "}
@@ -79,7 +83,7 @@ export default function FeaturesSection() {
         </motion.div>
 
         {/* Feature Grid — flip cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {features.map((f, i) => (
             <motion.div
               key={f.title}
@@ -88,9 +92,10 @@ export default function FeaturesSection() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className="perspective h-52 cursor-pointer group"
+              onClick={() => toggle(f.title)}
             >
-              {/* Inner — rotates on hover */}
-              <div className="relative w-full h-full preserve-3d transition-transform duration-700 ease-in-out group-hover:rotate-y-180">
+              {/* Inner — rotates on hover (desktop) or tap (mobile) */}
+              <div className={`relative w-full h-full preserve-3d transition-transform duration-700 ease-in-out ${flipped[f.title] ? "rotate-y-180" : ""} md:group-hover:rotate-y-180`}>
 
                 {/* ── FRONT: Currency note style ── */}
                 <div
