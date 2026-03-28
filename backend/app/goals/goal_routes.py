@@ -59,3 +59,17 @@ async def get_user_goals(user_id: str):
         return [GoalResponse(**g) for g in goals_list]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch goals: {str(e)}")
+
+@router.delete("/{user_id}/{goal_id}")
+async def delete_goal(user_id: str, goal_id: str):
+    deleted = await goals_repo.delete_one(goal_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    return {"message": "Goal deleted"}
+
+@router.patch("/{user_id}/{goal_id}/complete")
+async def complete_goal(user_id: str, goal_id: str):
+    done = await goals_repo.mark_complete(goal_id)
+    if not done:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    return {"message": "Goal marked complete"}

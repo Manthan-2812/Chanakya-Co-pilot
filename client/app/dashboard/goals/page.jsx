@@ -98,7 +98,7 @@ export default function GoalsPage() {
         Plan inflation-adjusted goals, compare investment types, and track market instruments.
       </p>
 
-      <div className="flex flex-col xl:flex-row gap-8 items-start">
+      <div className="flex flex-col gap-8 items-start">
 
         {/* ── Goal Form ───────────────────────────────── */}
         <div className="p-6 rounded-2xl border w-full max-w-md flex flex-col gap-4"
@@ -148,65 +148,12 @@ export default function GoalsPage() {
           </button>
         </div>
 
-        {/* ── Saved Goals ─────────────────────────────── */}
+        {/* Success toast */}
         {goals.length > 0 && (
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Your Goals</p>
-            <AnimatePresence>
-              {goals.map((g, i) => (
-                <motion.div key={g.id || i}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                  className="rounded-2xl border p-5 flex flex-col gap-3"
-                  style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <Target size={15} style={{ color: "var(--gold)" }} />
-                      <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{g.goal_name}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      {[g.risk_level, g.investment_type].map((badge) => badge && (
-                        <span key={badge} className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-                          style={{ color: "var(--gold)", background: "rgba(245,166,35,0.12)" }}>{badge}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { label: "Target", value: fmt(g.target_amount) },
-                      { label: "Inflation-Adj", value: fmt(g.inflation_adjusted_value) },
-                      { label: "Rec. SIP/mo", value: fmt(g.monthly_sip) },
-                      { label: "Your SIP/mo", value: fmt(g.invest_amount) },
-                    ].map((k) => (
-                      <div key={k.label}>
-                        <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{k.label}</p>
-                        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{k.value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {g.months_to_achieve > 0 && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <Clock size={13} style={{ color: "var(--gold)" }} />
-                      <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                        At ₹{Number(g.invest_amount).toLocaleString("en-IN")}/mo @ {g.expected_return_pct}% →{" "}
-                        <span style={{ color: "#10b981", fontWeight: 700 }}>
-                          {(g.months_to_achieve / 12).toFixed(1)} yrs
-                        </span>
-                        {g.achievement_date && ` (by ${g.achievement_date})`}
-                      </span>
-                    </div>
-                  )}
-
-                  {g.expected_return_pct && (
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {g.years} yr goal · {g.expected_return_pct}% expected return · Start: {g.start_date}
-                    </p>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          <p className="text-sm font-medium" style={{ color: "#10b981" }}>
+            ✓ Goal saved! View timelines &amp; comparisons on the{" "}
+            <a href="/dashboard/summary" className="underline" style={{ color: "var(--gold)" }}>Summary</a> page.
+          </p>
         )}
       </div>
 

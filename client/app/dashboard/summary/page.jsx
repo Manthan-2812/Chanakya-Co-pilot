@@ -6,8 +6,8 @@ import MainLayout from "@/components/layout/MainLayout";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
-import { getUserSummary, getUserGoals } from "@/library/api";
-import { Target, TrendingUp, Calendar } from "lucide-react";
+import { getUserSummary, getUserGoals, deleteGoal, completeGoal } from "@/library/api";
+import { Target, TrendingUp, Calendar, Trash2, CheckCircle } from "lucide-react";
 
 const USER_ID = "default_user";
 
@@ -24,7 +24,7 @@ const fmt = (n) =>
     : "—";
 
 /* ── Animated Goal Timeline ───────────────────────────── */
-function GoalTimeline({ goal, index }) {
+function GoalTimeline({ goal, index, onDelete, onComplete }) {
   const start = goal.start_date ? new Date(goal.start_date) : new Date();
   const end = goal.achievement_date ? new Date(goal.achievement_date) : new Date(start.getTime() + goal.years * 365.25 * 86400000);
   const now = new Date();
@@ -42,12 +42,19 @@ function GoalTimeline({ goal, index }) {
       className="rounded-2xl border p-5 flex flex-col gap-3"
       style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}
     >
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-start justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Target size={14} style={{ color: "var(--gold)" }} />
-          <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{goal.goal_name}</span>
+          <Target size={14} style={{ color: goal.status === "completed" ? "#10b981" : "var(--gold)" }} />
+          <span className="font-semibold" style={{
+            color: goal.status === "completed" ? "#10b981" : "var(--text-primary)",
+            textDecoration: goal.status === "completed" ? "line-through" : "none",
+          }}>{goal.goal_name}</span>
+          {goal.status === "completed" && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>COMPLETED</span>
+          )}
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           {goal.investment_type && (
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
               style={{ color: "var(--gold)", background: "rgba(245,166,35,0.12)" }}>{goal.investment_type}</span>
@@ -56,6 +63,20 @@ function GoalTimeline({ goal, index }) {
             <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
               style={{ color: "#a78bfa", background: "rgba(167,139,250,0.12)" }}>{goal.risk_level} Risk</span>
           )}
+          {goal.status !== "completed" && (
+            <button onClick={() => onComplete?.(goal._id || goal.id)}
+              title="Mark as Complete"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              style={{ background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>
+              <CheckCircle size={13} />
+            </button>
+          )}
+          <button onClick={() => onDelete?.(goal._id || goal.id)}
+            title="Delete Goal"
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+            style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <Trash2 size={12} />
+          </button>
         </div>
       </div>
 
@@ -169,7 +190,7 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const loadData = () =>
     Promise.all([
       getUserSummary(USER_ID).catch(() => null),
       getUserGoals(USER_ID).catch(() => []),
@@ -178,7 +199,20 @@ export default function SummaryPage() {
       setGoals(Array.isArray(g) ? g : []);
     }).catch(() => setError("Could not load data. Is the backend running?"))
       .finally(() => setLoading(false));
-  }, []);
+
+  useEffect(() => { loadData(); }, []);
+
+  const handleDelete = async (goalId) => {
+    if (!goalId) return;
+    await deleteGoal(USER_ID, goalId).catch(() => {});
+    setGoals((prev) => prev.filter((g) => g._id !== goalId));
+  };
+
+  const handleComplete = async (goalId) => {
+    if (!goalId) return;
+    await completeGoal(USER_ID, goalId).catch(() => {});
+    setGoals((prev) => prev.map((g) => g._id === goalId ? { ...g, status: "completed" } : g));
+  };
 
   const progress = summary ? Math.min(100, Math.round((summary.overall_progress || 0) * 100)) : 0;
   const statusColor = summary ? goalColor(summary.goal_status) : "#f5a623";
@@ -285,7 +319,8 @@ export default function SummaryPage() {
           </div>
           <div className="flex flex-col gap-5">
             {goals.map((g, i) => (
-              <GoalTimeline key={g.id || i} goal={g} index={i} />
+              <GoalTimeline key={g._id || g.id || i} goal={g} index={i}
+                onDelete={handleDelete} onComplete={handleComplete} />
             ))}
           </div>
         </div>

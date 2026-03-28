@@ -9,4 +9,5 @@ pandas
 mplfinance
 google-generativeai
 python-dateutil
+feedparser
 

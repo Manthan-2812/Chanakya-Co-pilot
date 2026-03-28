@@ -28,4 +28,20 @@ class _GoalsRepo:
     async def find_by_user(self, user_id: str) -> list:
         return [g for g in self._data if g.get("user_id") == user_id]
 
+    async def delete_one(self, goal_id: str) -> bool:
+        before = len(self._data)
+        self._data = [g for g in self._data if g.get("_id") != goal_id]
+        if len(self._data) < before:
+            self._flush()
+            return True
+        return False
+
+    async def mark_complete(self, goal_id: str) -> bool:
+        for g in self._data:
+            if g.get("_id") == goal_id:
+                g["status"] = "completed"
+                self._flush()
+                return True
+        return False
+
 goals_repo = _GoalsRepo()

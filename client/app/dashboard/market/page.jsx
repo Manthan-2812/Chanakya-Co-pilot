@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import SignalCard from "@/components/ui/SignalCard";
-import { getMarketSummary } from "@/library/api";
+import { getMarketSummary, getMarketNews } from "@/library/api";
+import { Newspaper, ExternalLink } from "lucide-react";
 
 const signalType = (val) => {
   const v = (val || "").toLowerCase();
@@ -16,13 +17,18 @@ const changeColor = (n) => (n > 0 ? "#10b981" : n < 0 ? "#ef4444" : "#f5a623");
 
 export default function MarketPage() {
   const [data, setData] = useState(null);
+  const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getMarketSummary()
-      .then(setData)
-      .catch(() => setError("Could not load market data. Is the backend running?"))
+    Promise.all([
+      getMarketSummary().catch(() => null),
+      getMarketNews().catch(() => []),
+    ]).then(([market, headlines]) => {
+      setData(market);
+      setNews(Array.isArray(headlines) ? headlines : []);
+    }).catch(() => setError("Could not load market data. Is the backend running?"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -80,6 +86,45 @@ export default function MarketPage() {
             ))}
           </div>
         </>
+      )}
+
+      {/* ── Live News ──────────────────────────────── */}
+      {news.length > 0 && (
+        <div className="mt-10 max-w-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Newspaper size={15} style={{ color: "var(--gold)" }} />
+            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>
+              Live Market Headlines
+            </h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
+              LIVE · Economic Times
+            </span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {news.map((item, i) => (
+              <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
+                className="rounded-xl border p-4 flex flex-col gap-1 transition-all hover:border-[rgba(245,166,35,0.4)] group"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)", textDecoration: "none" }}>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold leading-snug group-hover:text-[var(--gold)] transition-colors"
+                    style={{ color: "var(--text-primary)" }}>
+                    {item.title}
+                  </p>
+                  <ExternalLink size={12} className="shrink-0 mt-0.5" style={{ color: "var(--text-muted)" }} />
+                </div>
+                {item.summary && (
+                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
+                    {item.summary.replace(/<[^>]*>/g, "")}
+                  </p>
+                )}
+                {item.published && (
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{item.published}</p>
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
       )}
     </MainLayout>
   );

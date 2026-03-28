@@ -23,6 +23,12 @@ export const createGoal = (payload) =>
 export const getUserGoals = (userId) =>
   api.get(`/goals/${userId}`).then((r) => r.data);
 
+export const deleteGoal = (userId, goalId) =>
+  api.delete(`/goals/${userId}/${goalId}`).then((r) => r.data);
+
+export const completeGoal = (userId, goalId) =>
+  api.patch(`/goals/${userId}/${goalId}/complete`).then((r) => r.data);
+
 // ── Portfolio ──────────────────────────────────────────
 export const createPortfolio = (payload) =>
   api.post("/portfolio/create", payload).then((r) => r.data);

@@ -1,9 +1,41 @@
+import asyncio
+import feedparser
 from fastapi import APIRouter, HTTPException
 from app.market.market_schema import MarketResponse
 from app.market.market_service import analyze_market
 from app.market.gemini_service import generate_market_insight
 
 router = APIRouter(prefix="/market", tags=["Market Sentiment"])
+
+_NEWS_FEEDS = [
+    "https://economictimes.indiatimes.com/markets/rss.cms",
+    "https://economictimes.indiatimes.com/news/economy/rss.cms",
+]
+
+def _fetch_news() -> list:
+    items = []
+    for url in _NEWS_FEEDS:
+        try:
+            feed = feedparser.parse(url)
+            for e in feed.entries[:8]:
+                items.append({
+                    "title": e.get("title", ""),
+                    "summary": e.get("summary", e.get("description", ""))[:220],
+                    "link": e.get("link", ""),
+                    "published": e.get("published", ""),
+                    "source": "Economic Times",
+                })
+        except Exception:
+            pass
+    return items[:15]
+
+@router.get("/news")
+async def get_market_news():
+    try:
+        news = await asyncio.to_thread(_fetch_news)
+        return {"news": news}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/summary", response_model=MarketResponse)
 async def get_market_summary():
