@@ -8,4 +8,5 @@ yfinance
 pandas
 mplfinance
 google-generativeai
+python-dateutil
 

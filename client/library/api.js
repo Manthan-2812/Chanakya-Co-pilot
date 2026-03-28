@@ -34,6 +34,13 @@ export const getUserPortfolio = (userId) =>
 export const getMarketSummary = () =>
   api.get("/market/summary").then((r) => r.data);
 
+// ── Stocks / Derivatives ───────────────────────────────
+export const saveStockPositions = (userId, positions) =>
+  api.post(`/stocks/${userId}`, { user_id: userId, positions }).then((r) => r.data);
+
+export const getStockPositions = (userId) =>
+  api.get(`/stocks/${userId}`).then((r) => r.data);
+
 // ── Summary ────────────────────────────────────────────
 export const getUserSummary = (userId) =>
   api.get(`/summary/${userId}`).then((r) => r.data);

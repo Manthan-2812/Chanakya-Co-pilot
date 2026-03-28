@@ -5,6 +5,7 @@ from app.goals.goal_routes import router as goal_router
 from app.portfolio.portfolio_routes import router as portfolio_router
 from app.market.market_routes import router as market_router
 from app.summary.summary_routes import router as summary_router
+from app.stocks.stocks_routes import router as stocks_router
 
 app = FastAPI(
     title="AI Chatbot Backend",
@@ -26,6 +27,7 @@ app.include_router(goal_router)
 app.include_router(portfolio_router)
 app.include_router(market_router)
 app.include_router(summary_router)
+app.include_router(stocks_router)
 
 @app.get("/")
 def root():

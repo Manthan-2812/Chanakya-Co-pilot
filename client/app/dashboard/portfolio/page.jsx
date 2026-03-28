@@ -7,7 +7,8 @@ import {
   LineChart, Line, XAxis, YAxis, ResponsiveContainer,
 } from "recharts";
 import { AlertTriangle, Sparkles } from "lucide-react";
-import { getUserPortfolio } from "@/library/api";
+import { getUserPortfolio, getStockPositions } from "@/library/api";
+import { motion } from "framer-motion";
 
 const USER_ID = "default_user";
 const COLORS = ["#22c55e", "#3b82f6", "#facc15", "#f5a623", "#a78bfa", "#ef4444"];
@@ -26,13 +27,17 @@ const inflationData = [
 
 export default function PortfolioPage() {
   const [portfolio, setPortfolio] = useState(null);
+  const [stocks, setStocks] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getUserPortfolio(USER_ID)
-      .then(setPortfolio)
-      .catch(() => setPortfolio(null))
-      .finally(() => setLoading(false));
+    Promise.all([
+      getUserPortfolio(USER_ID).catch(() => null),
+      getStockPositions(USER_ID).catch(() => null),
+    ]).then(([p, s]) => {
+      setPortfolio(p);
+      setStocks(s?.positions?.length ? s : null);
+    }).finally(() => setLoading(false));
   }, []);
 
   const allocationData = portfolio?.allocation
@@ -152,6 +157,73 @@ export default function PortfolioPage() {
           <span style={{ color: "var(--gold)", fontWeight: 600 }}>Risk Simulation</span> panel.
         </p>
       </div>
+
+      {/* ── Stocks & Derivatives Live P&L ─────────── */}
+      {stocks && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="mt-8 max-w-3xl"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={14} style={{ color: "var(--gold)" }} />
+            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>
+              Market Instruments — Live P&amp;L
+            </h2>
+          </div>
+
+          {/* KPI strip */}
+          <div className="flex gap-4 flex-wrap mb-4">
+            {[
+              { label: "Invested",      value: fmt(stocks.total_invested) },
+              { label: "Current Value", value: fmt(stocks.total_current_value) },
+              { label: "P&L",           value: fmt(stocks.total_pnl),       color: stocks.total_pnl >= 0 ? "#10b981" : "#ef4444" },
+              { label: "Return",        value: `${stocks.total_pnl_pct?.toFixed(2)}%`, color: stocks.total_pnl_pct >= 0 ? "#10b981" : "#ef4444" },
+            ].map((k) => (
+              <div key={k.label} className="rounded-xl border px-4 py-3" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
+                <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>{k.label}</p>
+                <p className="text-base font-bold" style={{ color: k.color || "var(--text-primary)" }}>{k.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: "var(--bg-secondary)" }}>
+                  {["Symbol", "Type", "Qty", "Buy Price", "LTP", "Current Value", "P&L", "Return"].map((h) => (
+                    <th key={h} className="px-4 py-2.5 text-left text-[10px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {stocks.positions.map((pos, i) => (
+                  <tr key={i} style={{ borderTop: "1px solid var(--border)" }}>
+                    <td className="px-4 py-3 font-bold" style={{ color: "var(--gold)" }}>{pos.symbol}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                        style={{ background: "rgba(245,166,35,0.1)", color: "var(--gold)" }}>
+                        {pos.instrument_type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>{pos.quantity}</td>
+                    <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>₹{pos.buy_price}</td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {pos.current_price ? `₹${pos.current_price.toFixed(2)}` : "N/A"}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "var(--text-primary)" }}>{fmt(pos.current_value)}</td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: pos.pnl >= 0 ? "#10b981" : "#ef4444" }}>
+                      {pos.pnl >= 0 ? "+" : ""}{fmt(pos.pnl)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: pos.pnl_pct >= 0 ? "#10b981" : "#ef4444" }}>
+                      {pos.pnl_pct >= 0 ? "+" : ""}{pos.pnl_pct?.toFixed(2)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
     </MainLayout>
   );
 }

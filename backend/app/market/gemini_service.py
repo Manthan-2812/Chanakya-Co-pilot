@@ -8,7 +8,7 @@ def _call_gemini_api(prompt: str) -> dict:
     if not key or key == "your_gemini_api_key_here":
         raise ValueError("Missing Gemini API Key natively.")
         
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}]
     }
