@@ -139,3 +139,7 @@ Open `http://localhost:3000`
 ## 👥 Team
 
 Built for ET Markets Hackathon 2026 | Problem #6 — AI for the Indian Investor
+
+Team : Fire and Water .
+Team Leader : Manthan Parekh
+Team Member : Aryan Sutariya
