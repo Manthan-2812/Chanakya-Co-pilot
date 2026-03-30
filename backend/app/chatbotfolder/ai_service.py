@@ -2,7 +2,7 @@ import requests
 from app.config import settings
 from fastapi import HTTPException
 
-def get_ai_response(user_message: str) -> str:
+def get_ai_response(user_message: str, user_context: str = "") -> str:
     """
     Sends the user message to the Groq API and returns the AI's response.
     """
@@ -36,10 +36,18 @@ def get_ai_response(user_message: str) -> str:
                     "\n\nAlways give concise, actionable responses. Use INR (₹) for monetary values. "
                     "Be direct and data-driven. Never refuse to answer a financial or market question. "
                     "If you don't have real-time data, reason from first principles and known market dynamics."
+                    "\n\nIMPORTANT RULES FOR PERSONALISED ADVICE: "
+                    "When user context is provided, ALWAYS base your advice on their ACTUAL goals, SIP amounts, "
+                    "investment types, and time horizons. "
+                    "For goals with horizon > 15 years, recommend minimum 80% equity allocation — NEVER suggest shifting to debt. "
+                    "Flag underfunded goals (user SIP < recommended SIP). "
+                    "Flag overfunded goals as ahead of schedule. "
+                    "Always reference the user's specific goal names and numbers in your response."
+                    + user_context
                 )
             },
             {
-                "role": "user", 
+                "role": "user",
                 "content": user_message
             }
         ]
